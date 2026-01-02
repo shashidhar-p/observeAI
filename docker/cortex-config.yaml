@@ -1,0 +1,42 @@
+# Minimal Cortex configuration for development/testing
+auth_enabled: false
+
+server:
+  http_listen_port: 9009
+  grpc_listen_port: 9095
+
+distributor:
+  shard_by_all_labels: true
+  ring:
+    kvstore:
+      store: inmemory
+
+ingester:
+  lifecycler:
+    ring:
+      kvstore:
+        store: inmemory
+      replication_factor: 1
+
+storage:
+  engine: blocks
+
+blocks_storage:
+  backend: filesystem
+  filesystem:
+    dir: /tmp/cortex/blocks
+  bucket_store:
+    sync_dir: /tmp/cortex/sync
+  tsdb:
+    dir: /tmp/cortex/tsdb
+
+compactor:
+  data_dir: /tmp/cortex/compactor
+  sharding_ring:
+    kvstore:
+      store: inmemory
+
+ruler_storage:
+  backend: filesystem
+  filesystem:
+    dir: /tmp/cortex/rules

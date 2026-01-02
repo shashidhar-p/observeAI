@@ -1,0 +1,83 @@
+# Service health alert rules
+groups:
+  - name: service_alerts
+    interval: 15s
+    rules:
+      # Target Down (any scrape target unreachable)
+      - alert: TargetDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+          job: service_monitor
+        annotations:
+          summary: "Target {{ $labels.instance }} is down"
+          description: "Prometheus cannot scrape {{ $labels.job }} target {{ $labels.instance }}"
+
+      # High Request Latency
+      - alert: HighRequestLatency
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service)) > 1
+        for: 5m
+        labels:
+          severity: warning
+          job: service_latency_monitor
+        annotations:
+          summary: "High latency on {{ $labels.service }}"
+          description: "95th percentile latency is {{ printf \"%.2f\" $value }}s for {{ $labels.service }}"
+
+      # High Error Rate
+      - alert: HighErrorRate
+        expr: (sum(rate(http_requests_total{status=~"5.."}[5m])) by (service) / sum(rate(http_requests_total[5m])) by (service)) * 100 > 5
+        for: 5m
+        labels:
+          severity: warning
+          job: service_error_monitor
+        annotations:
+          summary: "High error rate on {{ $labels.service }}"
+          description: "Error rate is {{ printf \"%.1f\" $value }}% for {{ $labels.service }}"
+
+      - alert: CriticalErrorRate
+        expr: (sum(rate(http_requests_total{status=~"5.."}[5m])) by (service) / sum(rate(http_requests_total[5m])) by (service)) * 100 > 10
+        for: 2m
+        labels:
+          severity: critical
+          job: service_error_monitor
+        annotations:
+          summary: "Critical error rate on {{ $labels.service }}"
+          description: "Error rate is {{ printf \"%.1f\" $value }}% for {{ $labels.service }}"
+
+  - name: observability_stack_alerts
+    interval: 15s
+    rules:
+      # Prometheus Storage
+      - alert: PrometheusStorageFilling
+        expr: predict_linear(prometheus_tsdb_storage_blocks_bytes[6h], 24*60*60) > prometheus_tsdb_retention_limit_bytes
+        for: 1h
+        labels:
+          severity: warning
+          job: prometheus_monitor
+        annotations:
+          summary: "Prometheus storage will exceed limit"
+          description: "Prometheus storage is predicted to exceed limit within 24 hours"
+
+      # Alertmanager Issues
+      - alert: AlertmanagerNotificationsFailing
+        expr: rate(alertmanager_notifications_failed_total[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          job: alertmanager_monitor
+        annotations:
+          summary: "Alertmanager notification failures"
+          description: "Alertmanager is failing to send notifications"
+
+      # Loki Issues
+      - alert: LokiRequestErrors
+        expr: rate(loki_request_duration_seconds_count{status_code=~"5.."}[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          job: loki_monitor
+        annotations:
+          summary: "Loki experiencing errors"
+          description: "Loki is returning 5xx errors"

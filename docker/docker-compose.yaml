@@ -1,0 +1,61 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://rca:rca@postgres:5432/rca_db
+      - LOKI_URL=http://loki:3100
+      - CORTEX_URL=http://cortex:9009
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - CORRELATION_WINDOW_SECONDS=300
+      - LOG_LEVEL=INFO
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: rca
+      POSTGRES_PASSWORD: rca
+      POSTGRES_DB: rca_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rca -d rca_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Test stub for Loki - returns empty results
+  loki:
+    image: grafana/loki:2.9.0
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    restart: unless-stopped
+
+  # Test stub for Cortex - minimal configuration
+  cortex:
+    image: cortexproject/cortex:v1.16.0
+    ports:
+      - "9009:9009"
+    command:
+      - -config.file=/etc/cortex/cortex.yaml
+      - -target=all
+      - -auth.enabled=false
+    volumes:
+      - ./cortex-config.yaml:/etc/cortex/cortex.yaml:ro
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

@@ -1,0 +1,703 @@
+openapi: 3.1.0
+info:
+  title: Multi-Agent RCA System API
+  description: |
+    API for the Multi-Agent AI Observability & Root Cause Analysis System.
+
+    This API provides:
+    - Alert Manager webhook receiver for ingesting alerts
+    - RCA report retrieval and listing
+    - Health and status endpoints
+  version: 1.0.0
+  contact:
+    name: RCA System Team
+
+servers:
+  - url: http://localhost:8000
+    description: Local development
+  - url: http://rca-system:8000
+    description: Docker Compose
+
+tags:
+  - name: webhooks
+    description: Alert Manager webhook endpoints
+  - name: reports
+    description: RCA report management
+  - name: alerts
+    description: Alert management
+  - name: health
+    description: System health endpoints
+
+paths:
+  /webhooks/alertmanager:
+    post:
+      operationId: receiveAlertManagerWebhook
+      summary: Receive alerts from Alert Manager
+      description: |
+        Webhook endpoint that receives alert notifications from Prometheus Alert Manager.
+        Must acknowledge within 2 seconds to prevent Alert Manager retries.
+      tags:
+        - webhooks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertManagerWebhookPayload'
+            example:
+              receiver: rca-system
+              status: firing
+              alerts:
+                - status: firing
+                  labels:
+                    alertname: HighCPU
+                    severity: critical
+                    service: payment-api
+                    pod: payment-api-7d4f5b9-abc12
+                    namespace: production
+                  annotations:
+                    summary: High CPU usage detected
+                    description: CPU usage above 90% for 5 minutes
+                  startsAt: "2025-01-15T10:30:00Z"
+                  endsAt: "0001-01-01T00:00:00Z"
+                  generatorURL: http://prometheus:9090/graph
+                  fingerprint: abc123def456
+              groupLabels:
+                alertname: HighCPU
+              commonLabels:
+                severity: critical
+              externalURL: http://alertmanager:9093
+      responses:
+        '202':
+          description: Alert accepted for processing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookAcceptedResponse'
+        '400':
+          description: Invalid payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/alerts:
+    get:
+      operationId: listAlerts
+      summary: List received alerts
+      description: Retrieve a paginated list of alerts with optional filtering
+      tags:
+        - alerts
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [firing, resolved]
+          description: Filter by alert status
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [critical, warning, info]
+          description: Filter by severity
+        - name: service
+          in: query
+          schema:
+            type: string
+          description: Filter by service label
+        - name: since
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Only alerts after this timestamp
+        - name: until
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Only alerts before this timestamp
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 200
+          description: Maximum number of results
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+          description: Offset for pagination
+      responses:
+        '200':
+          description: List of alerts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertListResponse'
+
+  /api/v1/alerts/{alertId}:
+    get:
+      operationId: getAlert
+      summary: Get alert by ID
+      tags:
+        - alerts
+      parameters:
+        - name: alertId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Alert details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alert'
+        '404':
+          description: Alert not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/reports:
+    get:
+      operationId: listRCAReports
+      summary: List RCA reports
+      description: Retrieve a paginated list of RCA reports with optional filtering
+      tags:
+        - reports
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, complete, failed]
+          description: Filter by report status
+        - name: service
+          in: query
+          schema:
+            type: string
+          description: Filter by affected service
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [critical, warning, info]
+          description: Filter by incident severity
+        - name: since
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Reports completed after this timestamp
+        - name: until
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Reports completed before this timestamp
+        - name: min_confidence
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 100
+          description: Minimum confidence score
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 200
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of RCA reports
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RCAReportListResponse'
+
+  /api/v1/reports/{reportId}:
+    get:
+      operationId: getRCAReport
+      summary: Get RCA report by ID
+      description: Retrieve full RCA report including evidence and remediation steps
+      tags:
+        - reports
+      parameters:
+        - name: reportId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Full RCA report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RCAReport'
+        '404':
+          description: Report not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/reports/{reportId}/export:
+    get:
+      operationId: exportRCAReport
+      summary: Export RCA report
+      description: Export RCA report in different formats
+      tags:
+        - reports
+      parameters:
+        - name: reportId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: format
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [json, markdown]
+      responses:
+        '200':
+          description: Exported report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RCAReport'
+            text/markdown:
+              schema:
+                type: string
+        '404':
+          description: Report not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /health:
+    get:
+      operationId: healthCheck
+      summary: Health check endpoint
+      tags:
+        - health
+      responses:
+        '200':
+          description: System is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: System is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /health/ready:
+    get:
+      operationId: readinessCheck
+      summary: Readiness check endpoint
+      description: Checks if the system is ready to accept traffic
+      tags:
+        - health
+      responses:
+        '200':
+          description: System is ready
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadinessResponse'
+        '503':
+          description: System is not ready
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadinessResponse'
+
+components:
+  schemas:
+    AlertManagerWebhookPayload:
+      type: object
+      required:
+        - receiver
+        - status
+        - alerts
+      properties:
+        receiver:
+          type: string
+          description: Name of the receiver that matched
+        status:
+          type: string
+          enum: [firing, resolved]
+          description: Overall status of the alert group
+        alerts:
+          type: array
+          items:
+            $ref: '#/components/schemas/AlertManagerAlert'
+        groupLabels:
+          type: object
+          additionalProperties:
+            type: string
+        commonLabels:
+          type: object
+          additionalProperties:
+            type: string
+        commonAnnotations:
+          type: object
+          additionalProperties:
+            type: string
+        externalURL:
+          type: string
+          format: uri
+        version:
+          type: string
+        groupKey:
+          type: string
+        truncatedAlerts:
+          type: integer
+
+    AlertManagerAlert:
+      type: object
+      required:
+        - status
+        - labels
+        - startsAt
+        - fingerprint
+      properties:
+        status:
+          type: string
+          enum: [firing, resolved]
+        labels:
+          type: object
+          additionalProperties:
+            type: string
+          required:
+            - alertname
+        annotations:
+          type: object
+          additionalProperties:
+            type: string
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: string
+          format: date-time
+        generatorURL:
+          type: string
+          format: uri
+        fingerprint:
+          type: string
+          description: Unique identifier for deduplication
+
+    Alert:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        fingerprint:
+          type: string
+        alertname:
+          type: string
+        severity:
+          type: string
+          enum: [critical, warning, info]
+        status:
+          type: string
+          enum: [firing, resolved]
+        labels:
+          type: object
+          additionalProperties:
+            type: string
+        annotations:
+          type: object
+          additionalProperties:
+            type: string
+        starts_at:
+          type: string
+          format: date-time
+        ends_at:
+          type: string
+          format: date-time
+          nullable: true
+        generator_url:
+          type: string
+          format: uri
+          nullable: true
+        rca_report_id:
+          type: string
+          format: uuid
+          nullable: true
+        received_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    AlertListResponse:
+      type: object
+      properties:
+        alerts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Alert'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    RCAReport:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        alert_id:
+          type: string
+          format: uuid
+        root_cause:
+          type: string
+          description: Identified root cause
+        confidence_score:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Confidence percentage
+        summary:
+          type: string
+          description: Executive summary
+        timeline:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimelineEvent'
+        evidence:
+          $ref: '#/components/schemas/Evidence'
+        remediation_steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/RemediationStep'
+        status:
+          type: string
+          enum: [pending, complete, failed]
+        error_message:
+          type: string
+          nullable: true
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        analysis_metadata:
+          $ref: '#/components/schemas/AnalysisMetadata'
+
+    TimelineEvent:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        event:
+          type: string
+        source:
+          type: string
+          enum: [alert, log, metric]
+        details:
+          type: object
+
+    Evidence:
+      type: object
+      properties:
+        logs:
+          type: array
+          items:
+            $ref: '#/components/schemas/LogEvidence'
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetricEvidence'
+
+    LogEvidence:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        message:
+          type: string
+        source:
+          type: string
+        labels:
+          type: object
+          additionalProperties:
+            type: string
+
+    MetricEvidence:
+      type: object
+      properties:
+        name:
+          type: string
+        value:
+          type: number
+        timestamp:
+          type: string
+          format: date-time
+        labels:
+          type: object
+          additionalProperties:
+            type: string
+
+    RemediationStep:
+      type: object
+      required:
+        - priority
+        - action
+      properties:
+        priority:
+          type: string
+          enum: [immediate, long_term]
+        action:
+          type: string
+        command:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        risk:
+          type: string
+          enum: [low, medium, high]
+
+    AnalysisMetadata:
+      type: object
+      properties:
+        model:
+          type: string
+          description: LLM model used
+        tokens_used:
+          type: integer
+        duration_seconds:
+          type: number
+        tool_calls:
+          type: integer
+
+    RCAReportListResponse:
+      type: object
+      properties:
+        reports:
+          type: array
+          items:
+            $ref: '#/components/schemas/RCAReportSummary'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    RCAReportSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        alert_id:
+          type: string
+          format: uuid
+        root_cause:
+          type: string
+        confidence_score:
+          type: integer
+        status:
+          type: string
+          enum: [pending, complete, failed]
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    WebhookAcceptedResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [accepted]
+        message:
+          type: string
+        alerts_received:
+          type: integer
+        processing_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy]
+        version:
+          type: string
+        uptime_seconds:
+          type: integer
+
+    ReadinessResponse:
+      type: object
+      properties:
+        ready:
+          type: boolean
+        checks:
+          type: object
+          properties:
+            database:
+              type: boolean
+            loki:
+              type: boolean
+            cortex:
+              type: boolean
+            llm:
+              type: boolean

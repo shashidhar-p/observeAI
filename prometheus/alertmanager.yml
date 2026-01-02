@@ -1,0 +1,53 @@
+# Alertmanager configuration
+global:
+  resolve_timeout: 30s
+
+# Route tree - how alerts are routed
+route:
+  # Default receiver
+  receiver: 'rca-system'
+
+  # Group alerts by these labels
+  group_by: ['alertname', 'datacenter', 'severity']
+
+  # Wait before sending first notification for a new group
+  group_wait: 10s
+
+  # Wait before sending notification about new alerts in existing group
+  group_interval: 30s
+
+  # Wait before re-sending if alert is still firing
+  repeat_interval: 4h
+
+  # Child routes for specific handling
+  routes:
+    # Critical alerts - send immediately
+    - match:
+        severity: critical
+      receiver: 'rca-system'
+      group_wait: 5s
+      group_interval: 10s
+
+    # Warning alerts - normal timing
+    - match:
+        severity: warning
+      receiver: 'rca-system'
+
+# Inhibition rules - suppress alerts when others are firing
+inhibit_rules:
+  # If a critical alert is firing, suppress warning alerts for same service
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'service', 'datacenter']
+
+# Receivers - where to send alerts
+receivers:
+  - name: 'rca-system'
+    webhook_configs:
+      - url: 'http://172.19.0.1:8000/webhooks/alertmanager'
+        send_resolved: true
+        max_alerts: 100
+        http_config:
+          follow_redirects: true

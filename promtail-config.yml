@@ -1,0 +1,120 @@
+# Promtail configuration for RCA system
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  # System syslog - contains network interface events
+  - job_name: syslog
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: syslog
+          datacenter: dc-local
+          instance: node-exporter:9100
+          __path__: /var/log/syslog
+    pipeline_stages:
+      - regex:
+          expression: '(?P<timestamp>\w+\s+\d+\s+\d+:\d+:\d+)\s+(?P<host>\S+)\s+(?P<process>[^\[]+)(\[(?P<pid>\d+)\])?:\s+(?P<message>.*)'
+      - labels:
+          host:
+          process:
+      # Extract network interface from messages
+      - regex:
+          expression: '(?i)(eth\d+|enp\S+|veth\d+|dummy\d+|tailscale\d+)'
+          source: message
+      - labels:
+          device:
+      # Detect log level from message content
+      - regex:
+          expression: '(?i)(?P<level>error|warn|crit|alert|emerg|info|debug|notice)'
+          source: message
+      - labels:
+          level:
+
+  # Kernel messages - hardware/driver events including NIC
+  - job_name: kernel
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: kernel
+          datacenter: dc-local
+          instance: node-exporter:9100
+          __path__: /var/log/kern.log
+    pipeline_stages:
+      - regex:
+          expression: '(?P<timestamp>\w+\s+\d+\s+\d+:\d+:\d+)\s+(?P<host>\S+)\s+kernel:\s+\[[\s\d\.]+\]\s+(?P<message>.*)'
+      - labels:
+          host:
+      # Extract network interface
+      - regex:
+          expression: '(?i)(eth\d+|enp\S+|veth\d+|dummy\d+|tailscale\d+)'
+          source: message
+      - labels:
+          device:
+      # Mark errors
+      - regex:
+          expression: '(?i)(?P<level>error|fail|down|lost|timeout)'
+          source: message
+      - labels:
+          level:
+
+  # NetworkManager logs
+  - job_name: networkmanager
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: network_interface_monitor
+          service: node-exporter
+          datacenter: dc-local
+          instance: node-exporter:9100
+          __path__: /var/log/NetworkManager
+    pipeline_stages:
+      - regex:
+          expression: '(?i)(eth\d+|enp\S+|veth\d+|dummy\d+|tailscale\d+)'
+      - labels:
+          device:
+
+  # Dmesg output (if available)
+  - job_name: dmesg
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: kernel
+          datacenter: dc-local
+          instance: node-exporter:9100
+          __path__: /var/log/dmesg
+    pipeline_stages:
+      - regex:
+          expression: '(?i)(eth\d+|enp\S+|veth\d+|dummy\d+|tailscale\d+)'
+      - labels:
+          device:
+
+  # Journal logs (systemd)
+  - job_name: journal
+    journal:
+      max_age: 12h
+      labels:
+        job: systemd
+        datacenter: dc-local
+        instance: node-exporter:9100
+    relabel_configs:
+      - source_labels: ['__journal__systemd_unit']
+        target_label: 'unit'
+      - source_labels: ['__journal__hostname']
+        target_label: 'host'
+    pipeline_stages:
+      - regex:
+          expression: '(?i)(eth\d+|enp\S+|veth\d+|dummy\d+|tailscale\d+)'
+      - labels:
+          device:

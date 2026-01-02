@@ -1,0 +1,90 @@
+# Network-level alert rules
+groups:
+  - name: network_alerts
+    interval: 15s
+    rules:
+      # Network Interface Down
+      - alert: NetworkInterfaceDown
+        expr: node_network_up{device!~"lo|docker.*|br-.*|veth[a-f0-9]{6,}.*"} == 0
+        for: 30s
+        labels:
+          severity: critical
+          job: network_interface_monitor
+        annotations:
+          summary: "Network interface {{ $labels.device }} is down on {{ $labels.instance }}"
+          description: "Interface {{ $labels.device }} on {{ $labels.instance }} has been down for more than 30 seconds"
+
+      # Network Interface Flapping (multiple state changes)
+      - alert: NetworkInterfaceFlapping
+        expr: changes(node_network_up{device!~"lo|docker.*|br-.*|veth[a-f0-9]{6,}.*"}[5m]) > 3
+        for: 1m
+        labels:
+          severity: warning
+          job: network_interface_monitor
+        annotations:
+          summary: "Network interface {{ $labels.device }} is flapping on {{ $labels.instance }}"
+          description: "Interface {{ $labels.device }} has changed state {{ $value }} times in 5 minutes"
+
+      # High Network Traffic (potential DDoS or anomaly)
+      - alert: HighNetworkTrafficIn
+        expr: rate(node_network_receive_bytes_total{device!~"lo|docker.*|br-.*|veth.*"}[5m]) / 1000000 > 100
+        for: 5m
+        labels:
+          severity: warning
+          job: network_traffic_monitor
+        annotations:
+          summary: "High inbound traffic on {{ $labels.device }} ({{ $labels.instance }})"
+          description: "Receiving {{ printf \"%.1f\" $value }} MB/s on interface {{ $labels.device }}"
+
+      - alert: HighNetworkTrafficOut
+        expr: rate(node_network_transmit_bytes_total{device!~"lo|docker.*|br-.*|veth.*"}[5m]) / 1000000 > 100
+        for: 5m
+        labels:
+          severity: warning
+          job: network_traffic_monitor
+        annotations:
+          summary: "High outbound traffic on {{ $labels.device }} ({{ $labels.instance }})"
+          description: "Transmitting {{ printf \"%.1f\" $value }} MB/s on interface {{ $labels.device }}"
+
+      # Network Errors
+      - alert: NetworkReceiveErrors
+        expr: rate(node_network_receive_errs_total{device!~"lo|docker.*|br-.*|veth.*"}[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+          job: network_error_monitor
+        annotations:
+          summary: "Network receive errors on {{ $labels.device }} ({{ $labels.instance }})"
+          description: "{{ printf \"%.1f\" $value }} receive errors/sec on interface {{ $labels.device }}"
+
+      - alert: NetworkTransmitErrors
+        expr: rate(node_network_transmit_errs_total{device!~"lo|docker.*|br-.*|veth.*"}[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+          job: network_error_monitor
+        annotations:
+          summary: "Network transmit errors on {{ $labels.device }} ({{ $labels.instance }})"
+          description: "{{ printf \"%.1f\" $value }} transmit errors/sec on interface {{ $labels.device }}"
+
+      # Packet Drops
+      - alert: NetworkPacketDrops
+        expr: rate(node_network_receive_drop_total{device!~"lo|docker.*|br-.*|veth.*"}[5m]) + rate(node_network_transmit_drop_total{device!~"lo|docker.*|br-.*|veth.*"}[5m]) > 100
+        for: 2m
+        labels:
+          severity: warning
+          job: network_error_monitor
+        annotations:
+          summary: "High packet drops on {{ $labels.device }} ({{ $labels.instance }})"
+          description: "{{ printf \"%.1f\" $value }} packets/sec being dropped on interface {{ $labels.device }}"
+
+      # Network Saturation (high utilization)
+      - alert: NetworkInterfaceSaturated
+        expr: ((rate(node_network_receive_bytes_total{device!~"lo|docker.*|br-.*|veth.*"}[1m]) + rate(node_network_transmit_bytes_total{device!~"lo|docker.*|br-.*|veth.*"}[1m])) / node_network_speed_bytes{device!~"lo|docker.*|br-.*|veth.*"}) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          job: network_traffic_monitor
+        annotations:
+          summary: "Network interface {{ $labels.device }} saturated on {{ $labels.instance }}"
+          description: "Interface {{ $labels.device }} is at {{ printf \"%.1f\" $value }}% capacity"
