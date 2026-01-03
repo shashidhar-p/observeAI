@@ -42,6 +42,55 @@ Build an AI-powered observability platform that receives alerts from Alert Manag
 
 **Additional Infrastructure**: Redis for inter-agent message queue
 
+## Architecture Evolution: LLM-Agnostic Design
+
+**Date Updated**: 2026-01-03
+
+### Initial Design (Historical Context)
+
+The POC was initially prototyped with Anthropic Claude as the LLM provider due to:
+- Strong tool/function calling capabilities
+- Reliable structured output generation
+- Good performance on technical analysis tasks
+
+### Evolution to Multi-Provider Architecture
+
+**Decision**: Migrate to LLM-agnostic architecture with pluggable providers.
+
+**Rationale**:
+
+| Reason | Impact |
+|--------|--------|
+| **Vendor Independence** | Avoid lock-in to single provider; flexibility to switch based on cost/performance |
+| **Cost Optimization** | Use local models (Ollama) for development, cloud APIs for production |
+| **Enterprise Adoption** | Some enterprises have preferred/approved LLM vendors |
+| **Open Source Friendly** | Enable fully local deployment without cloud API dependencies |
+| **Resilience** | Fallback providers if primary is unavailable |
+
+### Supported Providers (Current)
+
+| Provider | Use Case | Models |
+|----------|----------|--------|
+| **OpenAI** | Production (recommended) | gpt-4o, gpt-4-turbo |
+| **Google Gemini** | Alternative cloud | gemini-1.5-pro, gemini-1.5-flash |
+| **Ollama** | Local development, air-gapped | llama3.1:8b, mistral:7b, mixtral:8x7b |
+
+### Implementation Approach
+
+1. **Abstract LLM Interface**: `src/services/llm_provider.py` - Common interface for all providers
+2. **Provider Factory**: Runtime selection based on `LLM_PROVIDER` env var
+3. **Tool Schema Compatibility**: Unified tool definition format translated per-provider
+4. **Configurable Context**: `RCA_EXPERT_CONTEXT` env var for domain customization
+
+### Migration Notes
+
+- Original Anthropic-specific code preserved in git history for reference
+- All public documentation updated to be vendor-neutral
+- .env.example supports all three providers
+- Tests run against mock LLM interface for provider independence
+
+---
+
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
