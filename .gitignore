@@ -71,3 +71,9 @@ logs/
 node_modules/
 dist/
 .npm/
+pnpm-lock.yaml
+
+# Bazel
+bazel-*
+.bazelrc.user
+MODULE.bazel.lock

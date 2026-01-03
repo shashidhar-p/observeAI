@@ -1,0 +1,49 @@
+{
+  "receiver": "observeai",
+  "status": "firing",
+  "alerts": [
+    {
+      "status": "firing",
+      "labels": {
+        "alertname": "HighCPU",
+        "service": "payment-service",
+        "namespace": "production",
+        "severity": "critical"
+      },
+      "annotations": {
+        "summary": "High CPU on payment-service"
+      },
+      "startsAt": "2026-01-03T10:00:00Z",
+      "endsAt": "0001-01-01T00:00:00Z",
+      "generatorURL": "http://prometheus:9090/graph",
+      "fingerprint": "sameservice001"
+    },
+    {
+      "status": "firing",
+      "labels": {
+        "alertname": "HighMemory",
+        "service": "payment-service",
+        "namespace": "production",
+        "severity": "warning"
+      },
+      "annotations": {
+        "summary": "High memory on payment-service"
+      },
+      "startsAt": "2026-01-03T10:02:00Z",
+      "endsAt": "0001-01-01T00:00:00Z",
+      "generatorURL": "http://prometheus:9090/graph",
+      "fingerprint": "sameservice002"
+    }
+  ],
+  "groupLabels": {
+    "service": "payment-service"
+  },
+  "commonLabels": {
+    "service": "payment-service",
+    "namespace": "production"
+  },
+  "commonAnnotations": {},
+  "externalURL": "http://alertmanager:9093",
+  "version": "4",
+  "groupKey": "{}:{service=\"payment-service\"}"
+}

@@ -1,0 +1,50 @@
+{
+  "receiver": "observeai",
+  "status": "firing",
+  "alerts": [
+    {
+      "status": "firing",
+      "labels": {
+        "alertname": "DatabaseConnectionError",
+        "service": "auth-service",
+        "namespace": "production",
+        "severity": "critical"
+      },
+      "annotations": {
+        "summary": "Database connection timeout occurred",
+        "description": "Connection to PostgreSQL database timed out after 30 seconds"
+      },
+      "startsAt": "2026-01-03T10:00:00Z",
+      "endsAt": "0001-01-01T00:00:00Z",
+      "generatorURL": "http://prometheus:9090/graph",
+      "fingerprint": "semantic001aaa"
+    },
+    {
+      "status": "firing",
+      "labels": {
+        "alertname": "DBConnectionFailure",
+        "service": "auth-service",
+        "namespace": "production",
+        "severity": "critical"
+      },
+      "annotations": {
+        "summary": "Database connection failed with timeout",
+        "description": "PostgreSQL connection timed out - unable to establish connection within 30s"
+      },
+      "startsAt": "2026-01-03T10:01:00Z",
+      "endsAt": "0001-01-01T00:00:00Z",
+      "generatorURL": "http://prometheus:9090/graph",
+      "fingerprint": "semantic002bbb"
+    }
+  ],
+  "groupLabels": {},
+  "commonLabels": {
+    "service": "auth-service",
+    "namespace": "production",
+    "severity": "critical"
+  },
+  "commonAnnotations": {},
+  "externalURL": "http://alertmanager:9093",
+  "version": "4",
+  "groupKey": "{}:{}"
+}

@@ -75,6 +75,17 @@ sh_binary(
     ],
 )
 
+# Reset database (drop all tables, run migrations)
+# Usage: bazel run //:db-reset
+sh_binary(
+    name = "db-reset",
+    srcs = ["scripts/db-reset.sh"],
+    data = [
+        "alembic.ini",
+        "//alembic:migrations",
+    ],
+)
+
 # =============================================================================
 # Pip Compile Target
 # =============================================================================

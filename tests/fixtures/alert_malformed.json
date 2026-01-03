@@ -1,0 +1,13 @@
+{
+  "receiver": "observeai",
+  "status": "firing",
+  "alerts": [
+    {
+      "status": "firing",
+      "labels": "this_should_be_a_dict_not_string",
+      "annotations": {},
+      "fingerprint": "malformed123"
+    }
+  ],
+  "version": "4"
+}

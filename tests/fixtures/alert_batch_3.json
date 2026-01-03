@@ -1,0 +1,65 @@
+{
+  "receiver": "observeai",
+  "status": "firing",
+  "alerts": [
+    {
+      "status": "firing",
+      "labels": {
+        "alertname": "HighCPU",
+        "service": "api-gateway",
+        "namespace": "production",
+        "severity": "critical"
+      },
+      "annotations": {
+        "summary": "High CPU on api-gateway"
+      },
+      "startsAt": "2026-01-03T10:00:00Z",
+      "endsAt": "0001-01-01T00:00:00Z",
+      "generatorURL": "http://prometheus:9090/graph",
+      "fingerprint": "batch001aaa111"
+    },
+    {
+      "status": "firing",
+      "labels": {
+        "alertname": "HighMemory",
+        "service": "api-gateway",
+        "namespace": "production",
+        "severity": "warning"
+      },
+      "annotations": {
+        "summary": "High memory on api-gateway"
+      },
+      "startsAt": "2026-01-03T10:01:00Z",
+      "endsAt": "0001-01-01T00:00:00Z",
+      "generatorURL": "http://prometheus:9090/graph",
+      "fingerprint": "batch002bbb222"
+    },
+    {
+      "status": "firing",
+      "labels": {
+        "alertname": "HighLatency",
+        "service": "api-gateway",
+        "namespace": "production",
+        "severity": "warning"
+      },
+      "annotations": {
+        "summary": "High latency on api-gateway"
+      },
+      "startsAt": "2026-01-03T10:02:00Z",
+      "endsAt": "0001-01-01T00:00:00Z",
+      "generatorURL": "http://prometheus:9090/graph",
+      "fingerprint": "batch003ccc333"
+    }
+  ],
+  "groupLabels": {
+    "service": "api-gateway"
+  },
+  "commonLabels": {
+    "service": "api-gateway",
+    "namespace": "production"
+  },
+  "commonAnnotations": {},
+  "externalURL": "http://alertmanager:9093",
+  "version": "4",
+  "groupKey": "{}:{service=\"api-gateway\"}"
+}

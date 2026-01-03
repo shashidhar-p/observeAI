@@ -1,0 +1,47 @@
+{
+  "receiver": "observeai",
+  "status": "firing",
+  "alerts": [
+    {
+      "status": "firing",
+      "labels": {
+        "alertname": "HighCPU",
+        "service": "user-service",
+        "namespace": "production",
+        "severity": "critical"
+      },
+      "annotations": {
+        "summary": "High CPU on user-service"
+      },
+      "startsAt": "2026-01-03T10:00:00Z",
+      "endsAt": "0001-01-01T00:00:00Z",
+      "generatorURL": "http://prometheus:9090/graph",
+      "fingerprint": "diffservice001"
+    },
+    {
+      "status": "firing",
+      "labels": {
+        "alertname": "HighCPU",
+        "service": "order-service",
+        "namespace": "production",
+        "severity": "critical"
+      },
+      "annotations": {
+        "summary": "High CPU on order-service"
+      },
+      "startsAt": "2026-01-03T10:01:00Z",
+      "endsAt": "0001-01-01T00:00:00Z",
+      "generatorURL": "http://prometheus:9090/graph",
+      "fingerprint": "diffservice002"
+    }
+  ],
+  "groupLabels": {},
+  "commonLabels": {
+    "alertname": "HighCPU",
+    "namespace": "production"
+  },
+  "commonAnnotations": {},
+  "externalURL": "http://alertmanager:9093",
+  "version": "4",
+  "groupKey": "{}:{}"
+}

@@ -1,0 +1,36 @@
+# =============================================================================
+# BUILD file for integration tests
+# =============================================================================
+
+load("@rules_python//python:defs.bzl", "py_test")
+
+package(default_visibility = ["//visibility:private"])
+
+# =============================================================================
+# Integration Tests
+# =============================================================================
+
+# Placeholder for future integration tests
+# These tests require database and external services
+
+# Example integration test target (uncomment when tests exist):
+# py_test(
+#     name = "test_api",
+#     srcs = ["test_api.py"],
+#     size = "medium",
+#     tags = ["requires-db"],
+#     deps = [
+#         "//src:backend_lib",
+#         "//tests:conftest",
+#         "@pip//pytest",
+#         "@pip//pytest_asyncio",
+#         "@pip//httpx",
+#     ],
+# )
+
+# Run all integration tests
+# test_suite(
+#     name = "integration_tests",
+#     tests = [],
+#     tags = ["requires-db"],
+# )
