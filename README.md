@@ -1,6 +1,6 @@
 # Multi-Agent AI Observability & RCA System
 
-An AI-powered observability platform for automated Root Cause Analysis using Claude AI.
+An AI-powered observability platform for automated Root Cause Analysis.
 
 ## Features
 
