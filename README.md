@@ -1,12 +1,13 @@
 # Multi-Agent AI Observability & RCA System
 
-An AI-powered observability platform for automated Root Cause Analysis using Claude AI.
+An AI-powered observability platform for automated Root Cause Analysis with pluggable LLM providers.
 
 ## Features
 
 - **Automated Alert Triage**: Receive alerts from Prometheus Alert Manager and automatically analyze them
 - **Multi-Alert Correlation**: Group related alerts into incidents based on time proximity and label matching
-- **AI-Powered RCA**: Use Claude AI with tool calling to query logs (Loki) and metrics (Cortex)
+- **AI-Powered RCA**: Use LLM agents with tool calling to query logs (Loki) and metrics (Cortex)
+- **Pluggable LLM Providers**: Support for multiple AI providers (OpenAI, Gemini, Ollama, etc.)
 - **Remediation Suggestions**: Generate actionable remediation steps categorized by priority and risk
 - **REST API**: Full API access to alerts, incidents, and RCA reports
 
@@ -16,7 +17,7 @@ An AI-powered observability platform for automated Root Cause Analysis using Cla
 - PostgreSQL 14+
 - Loki (for logs)
 - Cortex (for metrics)
-- Anthropic API key
+- LLM API key (OpenAI, Gemini, or local Ollama)
 
 ## Quick Start
 
@@ -66,7 +67,7 @@ pip install -e ".[dev]"
 cp .env.example .env
 
 # Edit .env with your settings
-# Required: ANTHROPIC_API_KEY, DATABASE_URL
+# Required: LLM_API_KEY, DATABASE_URL
 ```
 
 ### 3. Start Services with Docker
@@ -124,11 +125,11 @@ src/
 ├── api/           # FastAPI routes and schemas
 ├── models/        # SQLAlchemy models
 ├── services/      # Business logic
-│   ├── rca_agent.py       # Claude AI agent for RCA
+│   ├── rca_agent.py       # LLM agent for RCA
 │   ├── correlation_service.py  # Alert correlation
 │   ├── webhook.py         # Alert Manager webhook handler
 │   └── ...
-├── tools/         # Claude tool definitions
+├── tools/         # LLM tool definitions
 │   ├── query_loki.py      # LogQL queries
 │   ├── query_cortex.py    # PromQL queries
 │   └── generate_report.py # Report generation
@@ -143,7 +144,9 @@ See `.env.example` for all configuration options:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `ANTHROPIC_API_KEY` | Claude API key | Required |
+| `LLM_PROVIDER` | LLM provider (openai, gemini, ollama) | `openai` |
+| `LLM_API_KEY` | LLM API key | Required |
+| `LLM_MODEL` | Model name | Provider default |
 | `DATABASE_URL` | PostgreSQL connection URL | `postgresql+asyncpg://rca:rca@localhost:5432/rca_db` |
 | `LOKI_URL` | Loki server URL | `http://localhost:3100` |
 | `CORTEX_URL` | Cortex server URL | `http://localhost:9009` |

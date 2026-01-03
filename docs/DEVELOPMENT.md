@@ -32,7 +32,7 @@ cd observeAI
 
 # 2. Copy environment file
 cp .env.example .env
-# Edit .env and add your ANTHROPIC_API_KEY
+# Edit .env and add your LLM_API_KEY
 
 # 3. Deploy everything (infrastructure + app containers)
 bazel run //:deploy
@@ -226,7 +226,7 @@ bazel build //containers:dashboard_image
 bazel run //containers:backend_image
 docker run -p 8000:8000 \
   -e DATABASE_URL=postgresql+asyncpg://rca:rca@host.docker.internal:5432/rca_db \
-  -e ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY \
+  -e LLM_API_KEY=$LLM_API_KEY \
   bazel/containers:backend_image
 
 # Load and run dashboard
@@ -257,7 +257,7 @@ observeAI/
 │   ├── api/             # API routes
 │   ├── models/          # SQLAlchemy models
 │   ├── services/        # Business logic
-│   └── tools/           # Claude AI tools
+│   └── tools/           # LLM agent tools
 │
 ├── dashboard/           # React frontend
 │   ├── BUILD.bazel
@@ -281,7 +281,9 @@ observeAI/
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `ANTHROPIC_API_KEY` | Yes | - | Claude API key |
+| `LLM_PROVIDER` | No | `openai` | LLM provider (openai, gemini, ollama) |
+| `LLM_API_KEY` | Yes | - | LLM API key |
+| `LLM_MODEL` | No | Provider default | Model name |
 | `DATABASE_URL` | No | `postgresql+asyncpg://rca:rca@localhost:5432/rca_db` | PostgreSQL connection |
 | `LOKI_URL` | No | `http://localhost:3100` | Loki server URL |
 | `CORTEX_URL` | No | `http://localhost:9009` | Cortex server URL |
