@@ -1,0 +1,19 @@
+# =============================================================================
+# BUILD file for services package
+# =============================================================================
+
+load("@rules_python//python:defs.bzl", "py_library")
+
+package(default_visibility = ["//visibility:public"])
+
+py_library(
+    name = "services_lib",
+    srcs = glob(["**/*.py"]),
+    deps = [
+        "//src/models:models_lib",
+        "@pip//anthropic",
+        "@pip//httpx",
+        "@pip//sqlalchemy",
+        "@pip//pydantic",
+    ],
+)

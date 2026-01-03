@@ -1,0 +1,91 @@
+# =============================================================================
+# Root BUILD file for observeAI
+# =============================================================================
+
+load("@rules_python//python:defs.bzl", "py_binary")
+load("@rules_python//python:pip.bzl", "compile_pip_requirements")
+
+package(default_visibility = ["//visibility:public"])
+
+# =============================================================================
+# Exported Files
+# =============================================================================
+
+exports_files([
+    "requirements_lock.txt",
+    ".bazelignore",
+])
+
+# =============================================================================
+# Build All Target
+# =============================================================================
+
+# Meta-target that builds all important artifacts
+filegroup(
+    name = "build_all",
+    srcs = [
+        "//src:backend",
+        "//dashboard:dashboard_bundle",
+    ],
+)
+
+# =============================================================================
+# Development Server
+# =============================================================================
+
+# Development server launcher (hot-reload mode)
+# Usage: bazel run //:dev
+sh_binary(
+    name = "dev",
+    srcs = ["scripts/dev.sh"],
+    data = [
+        "//src:backend_lib",
+        "//dashboard:dashboard_lib",
+    ],
+)
+
+# =============================================================================
+# Deployment
+# =============================================================================
+
+# Deploy full stack (infrastructure + containers)
+# Usage: bazel run //:deploy
+# Options: --no-build, --no-observability, --no-detach
+sh_binary(
+    name = "deploy",
+    srcs = ["scripts/deploy.sh"],
+    data = [
+        "//containers:backend_tarball",
+        "//containers:dashboard_tarball",
+        "docker-compose.observability.yml",
+        "docker/docker-compose.yaml",
+        "alembic.ini",
+        "//alembic:migrations",
+    ],
+)
+
+# Stop all deployed services
+# Usage: bazel run //:deploy-stop
+sh_binary(
+    name = "deploy-stop",
+    srcs = ["scripts/deploy-stop.sh"],
+    data = [
+        "docker-compose.observability.yml",
+        "docker/docker-compose.yaml",
+    ],
+)
+
+# =============================================================================
+# Pip Compile Target
+# =============================================================================
+
+# Regenerate requirements_lock.txt from pyproject.toml
+# Usage: bazel run //:pip_compile
+# Note: The auto-generated pip_compile_test is disabled because we manually
+# maintain requirements_lock.txt with additional transitive dependencies
+compile_pip_requirements(
+    name = "pip_compile",
+    src = "pyproject.toml",
+    requirements_txt = "requirements_lock.txt",
+    tags = ["manual"],  # Disable auto-generated test
+)

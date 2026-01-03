@@ -1,0 +1,12 @@
+# Directories to ignore for Bazel builds
+.git
+.venv
+venv
+node_modules
+dashboard/node_modules
+dashboard/dist
+__pycache__
+.pytest_cache
+.mypy_cache
+.ruff_cache
+*.egg-info

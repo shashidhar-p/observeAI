@@ -1,0 +1,84 @@
+# =============================================================================
+# Bazel Configuration for observeAI
+# =============================================================================
+
+# Enable bzlmod (default in Bazel 7+)
+common --enable_bzlmod
+
+# =============================================================================
+# Build Settings
+# =============================================================================
+
+# Use all available CPUs for parallel builds
+build --jobs=auto
+
+# Enable remote cache compression
+build --experimental_remote_cache_compression
+
+# Show progress messages
+build --show_progress_rate_limit=0.5
+
+# Better error messages
+build --verbose_failures
+
+# =============================================================================
+# Test Settings
+# =============================================================================
+
+# Only show test errors, not passed tests
+test --test_output=errors
+
+# Short test summary
+test --test_summary=short
+
+# Run tests in parallel
+test --jobs=auto
+
+# =============================================================================
+# Python Settings
+# =============================================================================
+
+# Use hermetic Python toolchain
+build --@rules_python//python/config_settings:python_version=3.11
+
+# =============================================================================
+# Stamping (for container image tags)
+# =============================================================================
+
+# Enable workspace status for image tagging
+build --workspace_status_command=tools/workspace_status.sh
+
+# Stamping configuration
+build:stamp --stamp
+
+# =============================================================================
+# CI Configuration
+# =============================================================================
+
+# CI-specific settings (use with --config=ci)
+build:ci --remote_cache_compression
+build:ci --jobs=auto
+build:ci --stamp
+test:ci --test_output=errors
+
+# =============================================================================
+# Development Settings
+# =============================================================================
+
+# Development mode (use with --config=dev)
+build:dev --compilation_mode=fastbuild
+
+# =============================================================================
+# Release Settings
+# =============================================================================
+
+# Release mode (use with --config=release)
+build:release --compilation_mode=opt
+build:release --stamp
+
+# =============================================================================
+# ibazel (watch mode) Settings
+# =============================================================================
+
+# Settings for iterative development with ibazel
+build:ibazel --watchfs

@@ -1,0 +1,19 @@
+# =============================================================================
+# BUILD file for tests package
+# =============================================================================
+
+load("@rules_python//python:defs.bzl", "py_library")
+
+package(default_visibility = ["//tests:__subpackages__"])
+
+# Shared test fixtures and configuration
+py_library(
+    name = "conftest",
+    srcs = ["conftest.py"],
+    deps = [
+        "//src:backend_lib",
+        "@pip//pytest",
+        "@pip//pytest_asyncio",
+        "@pip//httpx",
+    ],
+)

@@ -1,0 +1,46 @@
+# =============================================================================
+# BUILD file for observeAI Python backend
+# =============================================================================
+
+load("@rules_python//python:defs.bzl", "py_binary", "py_library")
+
+package(default_visibility = ["//visibility:public"])
+
+# =============================================================================
+# Backend Library
+# =============================================================================
+
+py_library(
+    name = "backend_lib",
+    srcs = glob(
+        ["**/*.py"],
+        exclude = ["**/test_*.py", "**/*_test.py"],
+    ),
+    deps = [
+        "//src/api:api_lib",
+        "//src/models:models_lib",
+        "//src/services:services_lib",
+        "//src/tools:tools_lib",
+        "@pip//anthropic",
+        "@pip//fastapi",
+        "@pip//uvicorn",
+        "@pip//httpx",
+        "@pip//sqlalchemy",
+        "@pip//asyncpg",
+        "@pip//pydantic",
+        "@pip//pydantic_settings",
+        "@pip//alembic",
+        "@pip//python_dotenv",
+    ],
+)
+
+# =============================================================================
+# Backend Server Binary
+# =============================================================================
+
+py_binary(
+    name = "backend",
+    srcs = ["main.py"],
+    main = "main.py",
+    deps = [":backend_lib"],
+)

@@ -1,0 +1,16 @@
+# =============================================================================
+# BUILD file for models package
+# =============================================================================
+
+load("@rules_python//python:defs.bzl", "py_library")
+
+package(default_visibility = ["//visibility:public"])
+
+py_library(
+    name = "models_lib",
+    srcs = glob(["**/*.py"]),
+    deps = [
+        "@pip//sqlalchemy",
+        "@pip//pydantic",
+    ],
+)

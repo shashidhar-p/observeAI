@@ -1,0 +1,82 @@
+# =============================================================================
+# BUILD file for observeAI React dashboard
+# =============================================================================
+
+package(default_visibility = ["//visibility:public"])
+
+# =============================================================================
+# Exported Files
+# =============================================================================
+
+exports_files([
+    "pnpm-lock.yaml",
+    "package.json",
+    "tsconfig.json",
+    "vite.config.ts",
+    "index.html",
+    "postcss.config.js",
+    "tailwind.config.js",
+])
+
+# =============================================================================
+# Dashboard Library (source files)
+# =============================================================================
+
+filegroup(
+    name = "dashboard_lib",
+    srcs = glob([
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "src/**/*.css",
+    ]),
+)
+
+# =============================================================================
+# Static Assets
+# =============================================================================
+
+filegroup(
+    name = "static_assets",
+    srcs = [
+        "index.html",
+        "postcss.config.js",
+        "tailwind.config.js",
+        "vite.config.ts",
+        "package.json",
+        "tsconfig.json",
+    ],
+)
+
+# =============================================================================
+# Production Bundle (via npm run build)
+# =============================================================================
+
+# Note: This requires node_modules to be installed locally
+# Run: cd dashboard && pnpm install
+genrule(
+    name = "dashboard_bundle",
+    srcs = [
+        ":dashboard_lib",
+        ":static_assets",
+    ],
+    outs = ["dist.tar.gz"],
+    cmd = """
+        cd dashboard && \
+        npm run build && \
+        tar -czf ../$(OUTS) dist
+    """,
+    local = True,  # Run in local environment with node_modules
+)
+
+# =============================================================================
+# Development Server
+# =============================================================================
+
+sh_binary(
+    name = "dev_server",
+    srcs = ["build.sh"],
+    data = [
+        ":dashboard_lib",
+        ":static_assets",
+    ],
+)
