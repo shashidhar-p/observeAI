@@ -7,9 +7,27 @@ An AI-powered observability platform for automated Root Cause Analysis with plug
 - **Automated Alert Triage**: Receive alerts from Prometheus Alert Manager and automatically analyze them
 - **Multi-Alert Correlation**: Group related alerts into incidents based on time proximity and label matching
 - **AI-Powered RCA**: Use LLM agents with tool calling to query logs (Loki) and metrics (Cortex)
-- **Pluggable LLM Providers**: Support for multiple AI providers (OpenAI, Gemini, Ollama, etc.)
+- **Pluggable LLM Providers**: Support for multiple AI providers (OpenAI, Gemini, Ollama)
 - **Remediation Suggestions**: Generate actionable remediation steps categorized by priority and risk
+- **Real-time Dashboard**: Modern React dashboard with live incident monitoring
 - **REST API**: Full API access to alerts, incidents, and RCA reports
+
+## Screenshots
+
+### Incidents Dashboard
+Monitor all incidents with status filtering, severity indicators, and real-time auto-refresh.
+
+![Incidents List](docs/screenshots/incidents-list.png)
+
+### Correlated Alerts View
+See all alerts grouped into an incident with timeline offsets and ROOT cause identification.
+
+![Correlated Alerts](docs/screenshots/correlated-alerts.png)
+
+### AI-Powered RCA Analysis
+View detailed root cause analysis with confidence scores, evidence, and remediation steps.
+
+![RCA Analysis](docs/screenshots/rca-analysis.png)
 
 ## Requirements
 
@@ -94,6 +112,34 @@ uvicorn src.main:app --reload
 ```
 
 The API will be available at http://localhost:8000
+The Dashboard will be available at http://localhost:3001
+
+## Dashboard
+
+The React dashboard provides a modern, real-time interface for monitoring incidents and RCA reports.
+
+### Features
+
+| Feature | Description |
+|---------|-------------|
+| **Incident List** | View all incidents with status cards (Open, Analyzing, RCA Complete, Resolved) |
+| **Search & Filter** | Filter by status, severity, or search by incident title/service |
+| **Auto-Refresh** | Configurable auto-refresh (5s, 10s, 30s, 1m) for real-time monitoring |
+| **Correlated Alerts** | View all alerts grouped into an incident with timeline offsets |
+| **RCA Analysis** | Confidence gauge, root cause, summary, and evidence from logs/metrics |
+| **Remediation Steps** | Prioritized remediation actions with risk levels and commands |
+| **Event Timeline** | Chronological view of events from alerts, logs, and metrics |
+| **Grafana Integration** | Direct links to explore logs in Grafana/Loki |
+
+### Running the Dashboard
+
+```bash
+# With Bazel (recommended)
+bazel run //:dev  # Starts both backend (8000) and dashboard (3001)
+
+# Or standalone
+cd dashboard && npm install && npm run dev
+```
 
 ## API Endpoints
 
@@ -121,21 +167,33 @@ The API will be available at http://localhost:8000
 ## Architecture
 
 ```
-src/
-├── api/           # FastAPI routes and schemas
-├── models/        # SQLAlchemy models
-├── services/      # Business logic
-│   ├── rca_agent.py       # LLM agent for RCA
-│   ├── correlation_service.py  # Alert correlation
-│   ├── webhook.py         # Alert Manager webhook handler
-│   └── ...
-├── tools/         # LLM tool definitions
-│   ├── query_loki.py      # LogQL queries
-│   ├── query_cortex.py    # PromQL queries
-│   └── generate_report.py # Report generation
-├── config.py      # Configuration management
-├── database.py    # Database setup
-└── main.py        # Application entrypoint
+├── src/                    # Python backend
+│   ├── api/                # FastAPI routes and schemas
+│   ├── models/             # SQLAlchemy models (Alert, Incident, RCAReport)
+│   ├── services/           # Business logic
+│   │   ├── rca_agent.py    # LLM agent for RCA with tool calling
+│   │   ├── llm.py          # Multi-provider LLM abstraction
+│   │   ├── correlation_service.py  # Alert correlation
+│   │   └── webhook.py      # Alert Manager webhook handler
+│   ├── tools/              # LLM tool definitions
+│   │   ├── query_loki.py   # LogQL queries for logs
+│   │   ├── query_cortex.py # PromQL queries for metrics
+│   │   └── generate_report.py  # Report generation
+│   └── main.py             # FastAPI application entrypoint
+│
+├── dashboard/              # React frontend
+│   ├── src/
+│   │   ├── pages/
+│   │   │   ├── IncidentsPage.tsx    # Incident list with filters
+│   │   │   └── IncidentDetailPage.tsx  # RCA report viewer
+│   │   ├── api/client.ts   # API client with SWR
+│   │   └── types/          # TypeScript types
+│   └── vite.config.ts      # Vite with API proxy
+│
+├── prometheus/             # Alerting rules
+│   └── alerts/             # Network, host, service alerts
+│
+└── docker-compose.observability.yml  # Full stack deployment
 ```
 
 ## Configuration
