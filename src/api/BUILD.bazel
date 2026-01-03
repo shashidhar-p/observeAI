@@ -1,0 +1,17 @@
+# =============================================================================
+# BUILD file for API routes package
+# =============================================================================
+
+load("@rules_python//python:defs.bzl", "py_library")
+
+package(default_visibility = ["//visibility:public"])
+
+py_library(
+    name = "api_lib",
+    srcs = glob(["**/*.py"]),
+    deps = [
+        "//src/models:models_lib",
+        "@pip//fastapi",
+        "@pip//pydantic",
+    ],
+)

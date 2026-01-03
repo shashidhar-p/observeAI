@@ -1,0 +1,58 @@
+"""Bazel module definition for observeAI."""
+
+module(
+    name = "observeai",
+    version = "0.1.0",
+)
+
+# ============================================================================
+# Python Rules
+# ============================================================================
+bazel_dep(name = "rules_python", version = "0.31.0")
+
+# ============================================================================
+# Container Rules (OCI)
+# ============================================================================
+bazel_dep(name = "rules_oci", version = "1.7.0")
+bazel_dep(name = "rules_pkg", version = "0.10.0")
+
+# ============================================================================
+# Python Toolchain Configuration
+# ============================================================================
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+python.toolchain(
+    python_version = "3.11",
+    is_default = True,
+)
+
+# ============================================================================
+# Pip Dependencies
+# ============================================================================
+pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
+pip.parse(
+    hub_name = "pip",
+    python_version = "3.11",
+    requirements_lock = "//:requirements_lock.txt",
+)
+use_repo(pip, "pip")
+
+# ============================================================================
+# OCI Base Images
+# ============================================================================
+oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
+
+oci.pull(
+    name = "python_base",
+    image = "python",
+    tag = "3.11-slim",
+    platforms = ["linux/amd64"],
+)
+
+oci.pull(
+    name = "nginx_base",
+    image = "nginx",
+    tag = "alpine",
+    platforms = ["linux/amd64"],
+)
+
+use_repo(oci, "python_base", "nginx_base")

@@ -1,0 +1,44 @@
+# =============================================================================
+# BUILD file for unit tests
+# =============================================================================
+
+load("@rules_python//python:defs.bzl", "py_test")
+
+package(default_visibility = ["//visibility:private"])
+
+# =============================================================================
+# Unit Tests
+# =============================================================================
+
+py_test(
+    name = "test_schemas",
+    srcs = ["test_schemas.py"],
+    size = "small",
+    deps = [
+        "//src:backend_lib",
+        "//tests:conftest",
+        "@pip//pytest",
+        "@pip//pytest_asyncio",
+    ],
+)
+
+py_test(
+    name = "test_tools",
+    srcs = ["test_tools.py"],
+    size = "small",
+    deps = [
+        "//src:backend_lib",
+        "//tests:conftest",
+        "@pip//pytest",
+        "@pip//pytest_asyncio",
+    ],
+)
+
+# Run all unit tests
+test_suite(
+    name = "unit_tests",
+    tests = [
+        ":test_schemas",
+        ":test_tools",
+    ],
+)

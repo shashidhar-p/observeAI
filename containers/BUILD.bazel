@@ -1,0 +1,164 @@
+# =============================================================================
+# BUILD file for OCI container images
+# =============================================================================
+
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_push", "oci_tarball")
+
+package(default_visibility = ["//visibility:public"])
+
+# =============================================================================
+# Backend Container
+# =============================================================================
+
+# Package backend Python application into a tar layer
+pkg_tar(
+    name = "backend_layer",
+    srcs = ["//src:backend_lib"],
+    package_dir = "/app",
+)
+
+# Backend OCI image
+oci_image(
+    name = "backend_image",
+    base = "@python_base",
+    entrypoint = [
+        "/usr/local/bin/python",
+        "-m",
+        "uvicorn",
+        "src.main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+    ],
+    env = {
+        "PYTHONUNBUFFERED": "1",
+        "PYTHONPATH": "/app",
+    },
+    tars = [":backend_layer"],
+    workdir = "/app",
+)
+
+# Backend image as tarball (for local docker load)
+oci_tarball(
+    name = "backend_tarball",
+    image = ":backend_image",
+    repo_tags = ["observeai-backend:latest"],
+)
+
+# Push backend image to ghcr.io
+oci_push(
+    name = "backend_push",
+    image = ":backend_image",
+    remote_tags = ["latest"],
+    repository = "ghcr.io/shashidhar-p/observeai-backend",
+)
+
+# =============================================================================
+# Dashboard Container
+# =============================================================================
+
+# Extract dashboard bundle and repackage for nginx
+genrule(
+    name = "dashboard_extracted",
+    srcs = ["//dashboard:dashboard_bundle"],
+    outs = ["dashboard_files.tar"],
+    cmd = """
+        mkdir -p tmp_extract && \
+        tar -xzf $(location //dashboard:dashboard_bundle) -C tmp_extract && \
+        tar -cf $@ -C tmp_extract/dist . && \
+        rm -rf tmp_extract
+    """,
+)
+
+# Package dashboard static files into a tar layer
+pkg_tar(
+    name = "dashboard_layer",
+    srcs = [":dashboard_extracted"],
+    package_dir = "/usr/share/nginx/html",
+)
+
+# Nginx configuration for SPA routing
+genrule(
+    name = "nginx_conf",
+    outs = ["nginx.conf"],
+    cmd = """
+cat > $@ << 'EOF'
+server {
+    listen 80;
+    server_name localhost;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    location / {
+        try_files $$uri $$uri/ /index.html;
+    }
+
+    location /api {
+        proxy_pass http://backend:8000;
+        proxy_set_header Host $$host;
+        proxy_set_header X-Real-IP $$remote_addr;
+    }
+}
+EOF
+""",
+)
+
+pkg_tar(
+    name = "nginx_conf_layer",
+    srcs = [":nginx_conf"],
+    package_dir = "/etc/nginx/conf.d",
+)
+
+# Dashboard OCI image
+oci_image(
+    name = "dashboard_image",
+    base = "@nginx_base",
+    cmd = [
+        "nginx",
+        "-g",
+        "daemon off;",
+    ],
+    tars = [
+        ":dashboard_layer",
+        ":nginx_conf_layer",
+    ],
+)
+
+# Dashboard image as tarball (for local docker load)
+oci_tarball(
+    name = "dashboard_tarball",
+    image = ":dashboard_image",
+    repo_tags = ["observeai-dashboard:latest"],
+)
+
+# Push dashboard image to ghcr.io
+oci_push(
+    name = "dashboard_push",
+    image = ":dashboard_image",
+    remote_tags = ["latest"],
+    repository = "ghcr.io/shashidhar-p/observeai-dashboard",
+)
+
+# =============================================================================
+# Convenience Targets
+# =============================================================================
+
+# Build all images
+filegroup(
+    name = "all",
+    srcs = [
+        ":backend_image",
+        ":dashboard_image",
+    ],
+)
+
+# Build all tarballs
+filegroup(
+    name = "all_tarballs",
+    srcs = [
+        ":backend_tarball",
+        ":dashboard_tarball",
+    ],
+)

@@ -1,0 +1,15 @@
+# =============================================================================
+# BUILD file for Alembic migrations
+# =============================================================================
+
+package(default_visibility = ["//visibility:public"])
+
+# Export all migration files
+filegroup(
+    name = "migrations",
+    srcs = glob([
+        "*.py",
+        "*.mako",
+        "versions/*.py",
+    ]),
+)
