@@ -20,11 +20,34 @@ An AI-powered observability platform for automated Root Cause Analysis using Cla
 
 ## Quick Start
 
-### 1. Clone and Setup
+### Option A: Bazel Build (Recommended)
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/shashidhar-p/observeAI.git
+cd observeAI
+
+# Install bazelisk (Bazel version manager)
+# macOS: brew install bazelisk
+# Linux: curl -L https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64 -o /usr/local/bin/bazel && chmod +x /usr/local/bin/bazel
+
+# Build everything
+bazel build //...
+
+# Run tests
+bazel test //...
+
+# Start development servers
+bazel run //:dev
+```
+
+See [specs/002-bazel-build-infra/quickstart.md](specs/002-bazel-build-infra/quickstart.md) for detailed Bazel usage.
+
+### Option B: Traditional Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/shashidhar-p/observeAI.git
 cd observeAI
 
 # Create virtual environment
@@ -128,9 +151,19 @@ See `.env.example` for all configuration options:
 
 ## Development
 
+See **[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)** for the complete developer's guide, including:
+- Infrastructure setup (Prometheus, Alertmanager, Loki, Cortex, Grafana)
+- Bazel build commands
+- Container image building
+- Troubleshooting
+
 ### Running Tests
 
 ```bash
+# Via Bazel (recommended)
+bazel test //...
+
+# Via pytest
 pytest
 ```
 
