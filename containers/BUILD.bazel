@@ -67,7 +67,7 @@ genrule(
     cmd = """
         mkdir -p tmp_extract && \
         tar -xzf $(location //dashboard:dashboard_bundle) -C tmp_extract && \
-        tar -cf $@ -C tmp_extract/dist . && \
+        tar -cf $@ -C tmp_extract/dashboard/dist . && \
         rm -rf tmp_extract
     """,
 )

@@ -43,16 +43,16 @@ oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
 
 oci.pull(
     name = "python_base",
-    image = "python",
+    image = "docker.io/library/python",
     tag = "3.11-slim",
     platforms = ["linux/amd64"],
 )
 
 oci.pull(
     name = "nginx_base",
-    image = "nginx",
+    image = "docker.io/library/nginx",
     tag = "alpine",
     platforms = ["linux/amd64"],
 )
 
-use_repo(oci, "python_base", "nginx_base")
+use_repo(oci, "python_base", "python_base_linux_amd64", "nginx_base", "nginx_base_linux_amd64")

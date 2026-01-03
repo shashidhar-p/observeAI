@@ -1,12 +1,13 @@
 # Multi-Agent AI Observability & RCA System
 
-An AI-powered observability platform for automated Root Cause Analysis.
+An AI-powered observability platform for automated Root Cause Analysis with pluggable LLM providers.
 
 ## Features
 
 - **Automated Alert Triage**: Receive alerts from Prometheus Alert Manager and automatically analyze them
 - **Multi-Alert Correlation**: Group related alerts into incidents based on time proximity and label matching
-- **AI-Powered RCA**: Use Claude AI with tool calling to query logs (Loki) and metrics (Cortex)
+- **AI-Powered RCA**: Use LLM agents with tool calling to query logs (Loki) and metrics (Cortex)
+- **Pluggable LLM Providers**: Support for multiple AI providers (OpenAI, Gemini, Ollama, etc.)
 - **Remediation Suggestions**: Generate actionable remediation steps categorized by priority and risk
 - **REST API**: Full API access to alerts, incidents, and RCA reports
 
@@ -16,15 +17,38 @@ An AI-powered observability platform for automated Root Cause Analysis.
 - PostgreSQL 14+
 - Loki (for logs)
 - Cortex (for metrics)
-- Anthropic API key
+- LLM API key (OpenAI, Gemini, or local Ollama)
 
 ## Quick Start
 
-### 1. Clone and Setup
+### Option A: Bazel Build (Recommended)
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/shashidhar-p/observeAI.git
+cd observeAI
+
+# Install bazelisk (Bazel version manager)
+# macOS: brew install bazelisk
+# Linux: curl -L https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64 -o /usr/local/bin/bazel && chmod +x /usr/local/bin/bazel
+
+# Build everything
+bazel build //...
+
+# Run tests
+bazel test //...
+
+# Start development servers
+bazel run //:dev
+```
+
+See [specs/002-bazel-build-infra/quickstart.md](specs/002-bazel-build-infra/quickstart.md) for detailed Bazel usage.
+
+### Option B: Traditional Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/shashidhar-p/observeAI.git
 cd observeAI
 
 # Create virtual environment
@@ -43,7 +67,7 @@ pip install -e ".[dev]"
 cp .env.example .env
 
 # Edit .env with your settings
-# Required: ANTHROPIC_API_KEY, DATABASE_URL
+# Required: LLM_API_KEY, DATABASE_URL
 ```
 
 ### 3. Start Services with Docker
@@ -101,11 +125,11 @@ src/
 ├── api/           # FastAPI routes and schemas
 ├── models/        # SQLAlchemy models
 ├── services/      # Business logic
-│   ├── rca_agent.py       # Claude AI agent for RCA
+│   ├── rca_agent.py       # LLM agent for RCA
 │   ├── correlation_service.py  # Alert correlation
 │   ├── webhook.py         # Alert Manager webhook handler
 │   └── ...
-├── tools/         # Claude tool definitions
+├── tools/         # LLM tool definitions
 │   ├── query_loki.py      # LogQL queries
 │   ├── query_cortex.py    # PromQL queries
 │   └── generate_report.py # Report generation
@@ -120,7 +144,9 @@ See `.env.example` for all configuration options:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `ANTHROPIC_API_KEY` | Claude API key | Required |
+| `LLM_PROVIDER` | LLM provider (openai, gemini, ollama) | `openai` |
+| `LLM_API_KEY` | LLM API key | Required |
+| `LLM_MODEL` | Model name | Provider default |
 | `DATABASE_URL` | PostgreSQL connection URL | `postgresql+asyncpg://rca:rca@localhost:5432/rca_db` |
 | `LOKI_URL` | Loki server URL | `http://localhost:3100` |
 | `CORTEX_URL` | Cortex server URL | `http://localhost:9009` |
@@ -128,9 +154,19 @@ See `.env.example` for all configuration options:
 
 ## Development
 
+See **[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)** for the complete developer's guide, including:
+- Infrastructure setup (Prometheus, Alertmanager, Loki, Cortex, Grafana)
+- Bazel build commands
+- Container image building
+- Troubleshooting
+
 ### Running Tests
 
 ```bash
+# Via Bazel (recommended)
+bazel test //...
+
+# Via pytest
 pytest
 ```
 

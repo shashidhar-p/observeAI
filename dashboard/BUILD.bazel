@@ -63,7 +63,8 @@ genrule(
     cmd = """
         cd dashboard && \
         npm run build && \
-        tar -czf ../$(OUTS) dist
+        cd .. && \
+        tar -czf $@ dashboard/dist
     """,
     local = True,  # Run in local environment with node_modules
 )
